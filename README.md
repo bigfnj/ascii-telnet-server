@@ -1,58 +1,102 @@
 ASCII art movie Telnet player
 =============================
 
-Can stream an ~20 minutes ASCII movie via Telnet emulation
-as stand alone server or via xinetd daemon. 
+Streams ASCII art movies as VT100 terminal output over a TCP socket or stdout.
+The standalone server is useful for a local telnet-style demo; stdout mode can
+be used by classic service managers such as xinetd or by scripts that want raw
+terminal frames.
 
 Screenshot:
 
 <img src="screenshots/example.gif?raw=true" width=500>
 
-Wanna see it in action? Just watch http://asciinema.org/a/3132
+Wanna see it in action? Just watch https://asciinema.org/a/3132
 
 
-Tested with Python 2.6+, Python 3.5+
+Tested with Python 3.10+
 
 Original art work : Simon Jansen [http://www.asciimation.co.nz/](http://www.asciimation.co.nz/)  
 Telnetification & Player coding : Martin W. Kirst  
 Python3 Update: Ryan Jarvis
 
-Command line parameters
+Install for development
 -----------------------
 
-See program output:
+Create a virtual environment, install the package in editable mode, and run the
+tests:
 
-    $ python ascii_telnet_server.py --help
-    Usage: ascii_telnet_server.py [options]
-    Options:
+    $ python3 -m venv .venv
+    $ . .venv/bin/activate
+    $ python -m pip install -e ".[dev]"
+    $ python -m pytest
+
+From Windows PowerShell with this repository in WSL:
+
+    PS> wsl -e bash -lc "cd /home/bigfnj/projects/ascii-telnet-server && .venv/bin/python -m pytest"
+
+
+Command line
+------------
+
+After installation, run:
+
+    $ ascii-telnet-server --help
+    usage: ascii-telnet-server [-h] [--standalone] [--stdout] -f FILE
+                               [-i INTERFACE] [-p PORT] [-v] [-q]
+
+    Stream an encoded ASCII movie as VT100 output.
+
+    options:
       -h, --help            show this help message and exit
-      --standalone          Run as stand alone multi threaded TCP server (default)
-      --stdout              Run with STDIN and STDOUT, for example in XINETD
-                            instead of stand alone TCP server. Use with python
-                            option '-u' for unbuffered STDIN STDOUT communication
-      -f FILE, --file=FILE  Text file containing the ASCII movie
-      -i INTERFACE, --interface=INTERFACE
-                            Bind to this interface (default '0.0.0.0', all
-                            interfaces)
-      -p PORT, --port=PORT  Bind to this port (default 23, Telnet)
-      -v, --verbose         Verbose (default for TCP server)
-      -q, --quiet           Quiet! (default for STDIN STDOUT server)
+      --standalone          run as a standalone multi-threaded TCP server
+      --stdout              write VT100 output to stdout, for example under
+                            xinetd/systemd socket activation
+      -f FILE, --file FILE  text file containing the ASCII movie
+      -i INTERFACE, --interface INTERFACE
+                            interface to bind in standalone mode; use 0.0.0.0
+                            to expose it publicly
+      -p PORT, --port PORT  port to bind in standalone mode
+      -v, --verbose         print startup messages
+      -q, --quiet           suppress startup messages
+
+Standalone mode binds to `127.0.0.1:2323` by default.
 
 
 Run as stand alone server
 -------------------------
 
-Simple call this Python script by using the sample movie file:
+Run the console script with a sample movie file:
 
-    $> python ascii_telnet_server.py --standalone -f ../sample_movies/sw1.txt
-    Running TCP server on 0.0.0.0:23
+    $ ascii-telnet-server --standalone -f sample_movies/sw1.txt
+    Running TCP server on 127.0.0.1:2323
     Playing movie sw1.txt
    
+Then connect from another terminal:
 
-Run as xinetd program
+    $ telnet 127.0.0.1 2323
+
+To expose the demo publicly on the traditional telnet port, opt in explicitly:
+
+    $ sudo ascii-telnet-server --standalone -i 0.0.0.0 -p 23 -f sample_movies/sw1.txt
+
+
+Run to stdout
+-------------
+
+Stdout mode writes the raw VT100 frame stream:
+
+    $ ascii-telnet-server --stdout -f sample_movies/short_intro.txt
+
+From Windows PowerShell with this repository in WSL:
+
+    PS> wsl -e bash -lc "cd /home/bigfnj/projects/ascii-telnet-server && .venv/bin/ascii-telnet-server --stdout -f sample_movies/short_intro.txt"
+
+
+Legacy xinetd program
 ---------------------
 
-place this configuration into `/etc/xinetd.d/telnet`:
+If you still use xinetd, place this configuration into `/etc/xinetd.d/telnet`
+and adjust paths for your installation:
 
     # default: on
     # description: An telnet service playing an ASCII movie, Star Wars Episode 4 
@@ -69,7 +113,6 @@ place this configuration into `/etc/xinetd.d/telnet`:
             log_type        = FILE /var/log/asciiplayer
             log_on_success  += PID HOST DURATION
             log_on_failure  = HOST
-            server          = /usr/bin/python
-            server_args     = -u -OO /opt/asciiplayer/ascii_telnet_server.py -f /opt/asciiplayer/sw1.txt --stdout
+            server          = /opt/asciiplayer/.venv/bin/ascii-telnet-server
+            server_args     = --stdout -f /opt/asciiplayer/sw1.txt
     }
-

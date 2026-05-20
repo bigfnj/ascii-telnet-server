@@ -1,5 +1,5 @@
 # coding=utf-8
-# !/usr/bin/env python
+#!/usr/bin/env python3
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Copyright (c) 2008, Martin W. Kirst All rights reserved.
@@ -33,7 +33,7 @@
 
   Can stream an ~20 minutes ASCII movie via Telnet emulation
   as stand alone server or via xinetd daemon.
-  Tested with Python 2.6+, Python 3.5+
+  Tested with Python 3.10+
 
   Original art work : Simon Jansen ( http://www.asciimation.co.nz/ )
   Telnetification
@@ -41,18 +41,20 @@
   Python3 Update: Ryan Jarvis
 
 """
-from __future__ import division, print_function
-
+import argparse
 import os
 import sys
-from optparse import OptionParser
 
 from ascii_telnet.ascii_movie import Movie
 from ascii_telnet.ascii_player import VT100Player
 from ascii_telnet.ascii_server import TelnetRequestHandler, ThreadedTCPServer
 
 
-def runTcpServer(interface, port, filename):
+DEFAULT_INTERFACE = "127.0.0.1"
+DEFAULT_PORT = 2323
+
+
+def run_tcp_server(interface, port, filename):
     """
     Start a TCP server that a client can connect to that streams the output of
      Ascii Player
@@ -63,19 +65,20 @@ def runTcpServer(interface, port, filename):
         filename (str): file name of the ASCII movie
     """
     TelnetRequestHandler.filename = filename
-    server = ThreadedTCPServer((interface, port), TelnetRequestHandler)
-    server.serve_forever()
+    with ThreadedTCPServer((interface, port), TelnetRequestHandler) as server:
+        server.serve_forever()
 
 
-def runStdOut(filepath):
+def run_stdout(filepath, output=None):
     """
     Stream the output of the Ascii Player to STDOUT
     Args:
         filepath (str): file path of the ASCII movie
     """
+    output = output or sys.stdout
 
     def draw_frame_to_stdout(screen_buffer):
-        sys.stdout.write(screen_buffer.read().decode('iso-8859-15'))
+        output.write(screen_buffer.read().decode("iso-8859-15"))
 
     movie = Movie()
     movie.load(filepath)
@@ -84,44 +87,89 @@ def runStdOut(filepath):
     player.play()
 
 
-if __name__ == "__main__":
-    usage = "Usage: %prog [options]"
-    parser = OptionParser(usage=usage)
-    parser.add_option("", "--standalone", dest="tcpserv", action="store_true",
-                      help="Run as stand alone multi threaded TCP server (default)")
-    parser.add_option("", "--stdout", dest="tcpserv", action="store_false",
-                      help="Run with STDIN and STDOUT, for example in XINETD " +
-                           "instead of stand alone TCP server. " +
-                           "Use with python option '-u' for unbuffered " +
-                           "STDIN STDOUT communication")
-    parser.add_option("-f", "--file", dest="filename", metavar="FILE",
-                      help="Text file containing the ASCII movie")
-    parser.add_option("-i", "--interface", dest="interface",
-                      help="Bind to this interface (default '0.0.0.0', all interfaces)",
-                      default="0.0.0.0")
-    parser.add_option("-p", "--port", dest="port", metavar="PORT",
-                      help="Bind to this port (default 23, Telnet)",
-                      default=23, type="int")
-    parser.add_option("-v", "--verbose", action="store_true", dest="verbose",
-                      help="Verbose (default for TCP server)")
-    parser.add_option("-q", "--quiet", action="store_false", dest="verbose",
-                      help="Quiet! (default for STDIN STDOUT server)")
-    parser.set_defaults(interface="0.0.0.0",
-                        port=23,
-                        tcpserv=True,
-                        verbose=True, )
-    options = parser.parse_args()[0]
+def build_parser():
+    parser = argparse.ArgumentParser(
+        prog="ascii-telnet-server",
+        description="Stream an encoded ASCII movie as VT100 output.",
+    )
+    parser.add_argument(
+        "--standalone",
+        dest="tcpserv",
+        action="store_true",
+        help="run as a standalone multi-threaded TCP server",
+    )
+    parser.add_argument(
+        "--stdout",
+        dest="tcpserv",
+        action="store_false",
+        help="write VT100 output to stdout, for example under xinetd/systemd socket activation",
+    )
+    parser.add_argument(
+        "-f",
+        "--file",
+        dest="filename",
+        metavar="FILE",
+        required=True,
+        help="text file containing the ASCII movie",
+    )
+    parser.add_argument(
+        "-i",
+        "--interface",
+        default=DEFAULT_INTERFACE,
+        help="interface to bind in standalone mode; use 0.0.0.0 to expose it publicly",
+    )
+    parser.add_argument(
+        "-p",
+        "--port",
+        default=DEFAULT_PORT,
+        type=int,
+        metavar="PORT",
+        help="port to bind in standalone mode",
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        dest="verbose",
+        default=True,
+        help="print startup messages",
+    )
+    parser.add_argument(
+        "-q",
+        "--quiet",
+        action="store_false",
+        dest="verbose",
+        help="suppress startup messages",
+    )
+    parser.set_defaults(tcpserv=True)
+    return parser
 
-    if not (options.filename and os.path.exists(options.filename)):
-        parser.exit(1, "Error, file not found! See --help for details.\n")
+
+def main(argv=None):
+    parser = build_parser()
+    options = parser.parse_args(argv)
+
+    if not os.path.exists(options.filename):
+        parser.error("file not found: {0}".format(options.filename))
 
     try:
         if options.tcpserv:
             if options.verbose:
                 print("Running TCP server on {0}:{1}".format(options.interface, options.port))
                 print("Playing movie {0}".format(options.filename))
-            runTcpServer(options.interface, options.port, options.filename)
+            run_tcp_server(options.interface, options.port, options.filename)
         else:
-            runStdOut(options.filename)
+            run_stdout(options.filename)
     except KeyboardInterrupt:
         print("Ascii Player Quit.")
+        return 130
+    return 0
+
+
+# Backward-compatible names for callers using the original script API.
+runTcpServer = run_tcp_server
+runStdOut = run_stdout
+
+
+if __name__ == "__main__":
+    sys.exit(main())

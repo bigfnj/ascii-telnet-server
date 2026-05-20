@@ -24,8 +24,6 @@
 #  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-from __future__ import division, print_function
-
 import sys
 import time
 from io import BytesIO
@@ -33,7 +31,7 @@ from io import BytesIO
 from ascii_telnet.ascii_movie import TimeBar
 
 
-class VT100Player(object):
+class VT100Player:
     """
     Some escape codes used within VT100 Streams
     @see: http://ascii-table.com/ansi-escape-sequences-vt-100.php
@@ -148,8 +146,7 @@ class VT100Player(object):
             str: the VT100 code as a string
 
         """
-        if 0 >= x > self._movie.screen_width or 0 >= y > self._movie.screen_height:
+        if not (1 <= x <= self._movie.screen_width and 1 <= y <= self._movie.screen_height):
             sys.stderr.write("Warning, coordinates out of range. ({0}, {1})\n".format(x, y))
-            return "".encode()
-        else:
-            return (self.ESC + "[{0};{1}H".format(y, x)).encode()
+            return b""
+        return (self.ESC + "[{0};{1}H".format(y, x)).encode()

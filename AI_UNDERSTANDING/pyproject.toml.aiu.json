@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "path": "pyproject.toml",
+  "sha1": "c0c0e6bab30130743e24921bba04180fabef9483",
+  "purpose": "Modern Python packaging metadata. Defines the setuptools build backend, Python 3.10+ support, dev extra, pytest discovery, package/module inclusion, and ascii-telnet-server console script.",
+  "exports": [
+    "project metadata",
+    "ascii-telnet-server console script",
+    "dev extra",
+    "pytest config"
+  ],
+  "imports": [
+    "setuptools.build_meta",
+    "README.md",
+    "LICENSE",
+    "ascii_telnet_server:main"
+  ],
+  "called_by": [
+    ".github/workflows/tests.yml",
+    "README.md"
+  ],
+  "calls_out_to": [
+    "setuptools editable build",
+    "pytest test discovery"
+  ],
+  "invariants": [
+    "project.scripts.ascii-telnet-server must point at ascii_telnet_server:main.",
+    "requires-python must stay aligned with README and CI matrix.",
+    "tool.pytest.ini_options.testpaths keeps pytest focused on tests/.",
+    "py-modules must include ascii_telnet_server so the console script target is packaged."
+  ],
+  "gotchas": [
+    "Do not re-add deprecated license classifiers when using the SPDX license expression; current setuptools rejects that combination."
+  ]
+}

@@ -25,10 +25,7 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-from __future__ import division, print_function
-
-
-class Frame(object):
+class Frame:
     def __init__(self, display_time=1):
         """
         One frame is typically 67 columns and 13 rows in effective size on screen.
@@ -43,7 +40,7 @@ class Frame(object):
         self.data = []  # frame lines
 
 
-class TimeBar(object):
+class TimeBar:
     height = 1
 
     def __init__(self, duration, length, left_decorator=u"<", spacer=u" ", right_decorator=u">", marker=u"o"):
@@ -80,7 +77,7 @@ class TimeBar(object):
 
         return u"{tb.left_decorator}{internals}{tb.right_decorator}".format(internals=time_bar_internals, tb=self)
 
-    def get_marker_postion(self, frame_num):
+    def get_marker_position(self, frame_num):
         """
         Return the index for the marker position on the TimeBar's internal length
         Args:
@@ -90,8 +87,16 @@ class TimeBar(object):
             int: index number for marker
 
         """
+        if self.duration <= 0:
+            return 0
 
         return int(round(self.internal_length / self.duration * frame_num, 0))
+
+    def get_marker_postion(self, frame_num):
+        """
+        Backward-compatible alias for the original misspelled public method.
+        """
+        return self.get_marker_position(frame_num)
 
     def get_timebar(self, frame_num):
         """
@@ -113,7 +118,7 @@ class TimeBar(object):
                self._empty_timebar[marker_pos + len(self.right_decorator) + 1:]
 
 
-class Movie(object):
+class Movie:
     def __init__(self, width=80, height=24):
         """
         A Movie object consists of frames and is empty by default.
@@ -162,7 +167,7 @@ class Movie(object):
         current_frame = None
         lines_per_frame = self._frame_height + TimeBar.height  # incl. meta data (time information)
 
-        with open(filepath) as f:
+        with open(filepath, encoding="utf-8") as f:
             for line_num, line in enumerate(f):
                 time_metadata = None
 

@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ascii-telnet-server"
+version = "0.2.0"
+description = "Stream ASCII art movies as VT100 output over TCP or stdout."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "BSD-3-Clause"
+license-files = ["LICENSE"]
+authors = [
+  { name = "Martin W. Kirst" },
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Console",
+  "Intended Audience :: End Users/Desktop",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Internet",
+  "Topic :: Multimedia",
+  "Topic :: Terminals :: Telnet",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0.0",
+]
+
+[project.scripts]
+ascii-telnet-server = "ascii_telnet_server:main"
+
+[tool.setuptools]
+py-modules = ["ascii_telnet_server"]
+
+[tool.setuptools.packages.find]
+include = ["ascii_telnet*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

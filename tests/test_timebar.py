@@ -18,7 +18,7 @@ class TestTimeBar(object):
     def test_too_short_timebar(self):
         with pytest.raises(ValueError) as excinfo:
             TimeBar(0, 1)
-            assert str(excinfo.values) == "This TimeBar is too short for these decorators: < o >"
+        assert str(excinfo.value) == "This TimeBar is too short for these decorators: < o >"
 
     def test_short_timebar(self):
         tb = TimeBar(0, 3)
@@ -35,39 +35,47 @@ class TestTimeBar(object):
 
     def test_get_marker_position_easy(self):
         tb = TimeBar(100, 102)
-        assert tb.get_marker_postion(0) == 0
-        assert tb.get_marker_postion(1) == 1
-        assert tb.get_marker_postion(10) == 10
-        assert tb.get_marker_postion(20) == 20
-        assert tb.get_marker_postion(30) == 30
-        assert tb.get_marker_postion(40) == 40
-        assert tb.get_marker_postion(50) == 50
-        assert tb.get_marker_postion(99) == 99
-        assert tb.get_marker_postion(100) == 100
+        assert tb.get_marker_position(0) == 0
+        assert tb.get_marker_position(1) == 1
+        assert tb.get_marker_position(10) == 10
+        assert tb.get_marker_position(20) == 20
+        assert tb.get_marker_position(30) == 30
+        assert tb.get_marker_position(40) == 40
+        assert tb.get_marker_position(50) == 50
+        assert tb.get_marker_position(99) == 99
+        assert tb.get_marker_position(100) == 100
 
     def test_get_marker_position_harder(self):
         tb = TimeBar(100, 100)
-        assert tb.get_marker_postion(0) == 0
-        assert tb.get_marker_postion(1) == 1
-        assert tb.get_marker_postion(10) == 10
-        assert tb.get_marker_postion(20) == 20
-        assert tb.get_marker_postion(30) == 29
-        assert tb.get_marker_postion(40) == 39
-        assert tb.get_marker_postion(50) == 49
-        assert tb.get_marker_postion(99) == 97
-        assert tb.get_marker_postion(100) == 98
+        assert tb.get_marker_position(0) == 0
+        assert tb.get_marker_position(1) == 1
+        assert tb.get_marker_position(10) == 10
+        assert tb.get_marker_position(20) == 20
+        assert tb.get_marker_position(30) == 29
+        assert tb.get_marker_position(40) == 39
+        assert tb.get_marker_position(50) == 49
+        assert tb.get_marker_position(99) == 97
+        assert tb.get_marker_position(100) == 98
 
     def test_get_marker_position_small(self):
         tb = TimeBar(100, 10)
-        assert tb.get_marker_postion(0) == 0
-        assert tb.get_marker_postion(1) == 0
-        assert tb.get_marker_postion(10) == 1
-        assert tb.get_marker_postion(20) == 2
-        assert tb.get_marker_postion(30) == 2
-        assert tb.get_marker_postion(40) == 3
-        assert tb.get_marker_postion(50) == 4
-        assert tb.get_marker_postion(99) == 8
-        assert tb.get_marker_postion(100) == 8
+        assert tb.get_marker_position(0) == 0
+        assert tb.get_marker_position(1) == 0
+        assert tb.get_marker_position(10) == 1
+        assert tb.get_marker_position(20) == 2
+        assert tb.get_marker_position(30) == 2
+        assert tb.get_marker_position(40) == 3
+        assert tb.get_marker_position(50) == 4
+        assert tb.get_marker_position(99) == 8
+        assert tb.get_marker_position(100) == 8
+
+    def test_original_misspelled_marker_position_alias(self):
+        tb = TimeBar(100, 10)
+        assert tb.get_marker_postion(50) == tb.get_marker_position(50)
+
+    def test_marker_position_with_zero_duration(self):
+        tb = TimeBar(0, 10)
+        assert tb.get_marker_position(10) == 0
 
     def test_timebar_with_marker(self):
         tb = TimeBar(100, 102)

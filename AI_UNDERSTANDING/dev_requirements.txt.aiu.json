@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "path": "dev_requirements.txt",
+  "sha1": "bedc6ca384e1e4743b83ae244e6a16d1afc09439",
+  "purpose": "Minimal legacy/convenience development requirements file for users who install test dependencies with pip -r instead of the pyproject dev extra.",
+  "exports": [
+    "pytest>=8.0.0 requirement"
+  ],
+  "imports": [
+    "pytest"
+  ],
+  "called_by": [
+    "README.md"
+  ],
+  "calls_out_to": [
+    "pip install -r dev_requirements.txt"
+  ],
+  "invariants": [
+    "The pytest lower bound should stay compatible with the Python versions supported by pyproject.toml and GitHub Actions."
+  ],
+  "gotchas": [
+    "pyproject.toml [project.optional-dependencies].dev is now the primary development dependency declaration."
+  ]
+}

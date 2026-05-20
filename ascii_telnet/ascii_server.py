@@ -24,30 +24,23 @@
 #  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-from __future__ import division, print_function
-
 import errno
 import socket
+from socketserver import StreamRequestHandler, TCPServer, ThreadingMixIn
 
 from ascii_telnet.ascii_movie import Movie
 from ascii_telnet.ascii_player import VT100Player
 
-try:
-    # noinspection PyCompatibility
-    from socketserver import StreamRequestHandler, ThreadingMixIn, TCPServer
-except ImportError:  # Py2
-    # noinspection PyCompatibility,PyUnresolvedReferences
-    from SocketServer import StreamRequestHandler, ThreadingMixIn, TCPServer
-
 
 class ThreadedTCPServer(ThreadingMixIn, TCPServer):
+    allow_reuse_address = True
     daemon_threads = True
 
 
 class TelnetRequestHandler(StreamRequestHandler):
     """
     Request handler used for multi threaded TCP server
-    @see: SocketServer.StreamRequestHandler
+    @see: socketserver.StreamRequestHandler
     """
 
     filename = None  # filename is set once, so it's immutable and safe for multi threading
@@ -66,7 +59,9 @@ class TelnetRequestHandler(StreamRequestHandler):
         """
         try:
             self.wfile.write(screen_buffer.read())
-        except socket.error as e:
-            if e.errno == errno.EPIPE:
-                print("Client Disconnected.")
+        except OSError as e:
+            if e.errno in (errno.EPIPE, errno.ECONNRESET):
+                print("Client disconnected.")
                 self.player.stop()
+                return
+            raise
